@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <title>Race Dashboard</title>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      margin: 0; 
+      background: #f4f4f4; 
+    }
+    header { 
+      background: #222; 
+      color: white; 
+      padding: 10px 20px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+    }
+    h1 { 
+      margin: 0; 
+      font-size: 1.5em; 
+    }
+    nav button {
+      background: #444; 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      cursor: pointer;
+      margin-left: 8px; 
+      font-size: 1em;
+    }
+    nav button.active { 
+      background: #007bff; 
+    }
+    /* Faneblade */
+    #tabs > div { 
+      display: none; 
+      padding: 20px; 
+    }
+    #overviewTab.active, 
+    #starterTab.active,
+    #securityTab.active,
+    #debugTab.active { 
+      display: block; 
+    }
+    /* Sikkerhedsfane styling */
+    .security-overview {
+      background: #007bff;
+      color: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .security-overview h2 {
+      margin: 0 0 15px 0;
+      font-size: 1.5em;
+    }
+    .security-overview-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .security-overview-stat {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 6px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .security-overview-stat.danger {
+      background: #dc3545;
+      border-color: #b02a37;
+    }
+    .security-overview-stat-number {
+      font-size: 2em;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .security-overview-stat-label {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+    .security-heat {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+    .security-heat-header {
+      background: #f8f9fa;
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      font-weight: bold;
+    }
+    .security-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      padding: 15px;
+      background: #f8f9fa;
+    }
+    .security-stat {
+      text-align: center;
+      padding: 10px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+    .security-stat.danger {
+      background: #fff5f5;
+      border-color: #feb2b2;
+      color: #c53030;
+    }
+    .security-stat-number {
+      font-size: 1.5em;
+      font-weight: bold;
+      display: block;
+    }
+    .swimmers-in-water {
+      padding: 15px;
+    }
+    .swimmer-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .swimmer-item {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .swimmer-phone {
+      color: #666;
+      font-size: 0.85em;
+      margin: 4px 0;
+    }
+    .swimmer-time {
+      color: #d9534f;
+      font-weight: bold;
+      font-size: 0.95em;
+    }
+    /* Debug fane styling */
+    .debug-section {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .debug-header {
+      background: #f8f9fa;
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .debug-content {
+      padding: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .debug-json {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.85em;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    /* Overblik styling */
+    .race { 
+      background: #dde; 
+      padding: 10px; 
+      border-radius: 6px; 
+      margin-bottom: 14px; 
+    }
+    .wave { 
+      background: #eef; 
+      margin: 6px 0; 
+      padding: 8px; 
+      border-radius: 4px; 
+    }
+    .countdown { 
+      font-family: monospace; 
+      font-weight: bold; 
+      font-size: 1.1em; 
+      color: #003366; 
+    }
+    .raceclock { 
+      font-family: monospace; 
+      font-size: 1em; 
+      margin: 6px 0; 
+      color: #333; 
+    }
+    .live-status { 
+      background: #eee; 
+      padding: 6px 12px; 
+      border-left: 4px solid #0a0; 
+      margin-top: 10px; 
+    }
+    /* Starter-fanen – forstørret display */
+    #starterDisplay {
+      font-size: 4em;
+      text-align: center;
+      padding: 60px 30px;
+      transition: background 0.3s;
+      color: white;
+      border-radius: 8px;
+      margin-top: 20px;
+      white-space: pre-line;
+    }
+    #starterDisplay.red { background: #b30000; }
+    #starterDisplay.yellow { background: #d4af00; }
+    #starterDisplay.green { background: #228B22; }
+    /* Den store digitale klokke */
+    #currentTime {
+      text-align: center;
+      font-family: monospace;
+      font-size: 20em;
+      margin-top: 10px;
+      color: #333;
+    }
+    
+    /* Status bjælke */
+    #statusBar {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      display: none;
+    }
+    
+    #statusBar.show {
+      display: block;
+    }
+    
+    .status-item {
+      display: inline-block;
+      margin-right: 20px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    
+    .status-item.loading {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .status-item.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-item.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status-progress {
+      display: inline-block;
+      margin-left: 8px;
+      font-family: monospace;
+    }
+    #liveVideoTab.active {
+    display: block;
+}
+
+      .security-heat.green-heat {
+          background: #d4edda !important;
+      }
+
+      .security-heat.yellow-heat {
+          background: #fff3cd !important;
+      }
+
+      .security-heat.red-heat {
+          background: #f8d7da !important;
+      }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏁 Race Dashboard</h1>
+    <nav>
+      <button onclick="showTab('overviewTab', this)" class="active">🔍 Overblik</button>
+      <button onclick="showTab('starterTab', this)">🔔 Starter</button>
+      <button onclick="showTab('securityTab', this)">🛡️ Sikkerhed</button>
+      <button onclick="showTab('debugTab', this)">🔧 Debug</button>
+      <button onclick="showTab('liveVideoTab', this)">🎥 Live Video</button>
+    </nav>
+  </header>
+  
+  <div id="tabs">
+    <div id="overviewTab" class="active">
+      <!-- Status bjælke kun i overblik fanen -->
+      <div id="statusBar">
+        <span id="statusRaces" class="status-item">📊 Races: Venter...</span>
+        <span id="statusWaves" class="status-item">🌊 Waves: Venter...</span>
+        <span id="statusSecurity" class="status-item">🛡️ Sikkerhed: Venter...</span>
+        <span id="statusWebSocket" class="status-item">📡 WebSocket: Afbrudt</span>
+        <span id="statusCSV" class="status-item">📱 CSV: Ikke indlæst</span>
+      </div>
+      
+      <label for="ip">Timemaster IP:</label><br />
+      <input type="text" id="ip" placeholder="f.eks. 192.168.0.173" size="30" />
+      <button onclick="loadData()">Hent data</button>
+      
+      <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+        <label>📱 Deltager mobilnumre (CSV fil):</label><br />
+        <div id="csvStatus" style="margin-top: 10px; padding: 8px; border-radius: 4px; background: #e9ecef;">
+          <strong>📋 Instruktioner:</strong><br>
+          Mobilnumre indlæses automatisk fra deltagerinfo.csv i projektmappen.<br>
+          <em>Forventet format: Startnr, Fornavn, Efternavn, Deltager telefonnummer</em>
+        </div>
+      </div>
+      
+      <div class="live-status">
+        🔌 WebSocket: <span id="ws-status">ikke forbundet</span>
+      </div>
+      <div id="raceList">Indtast IP og klik “Hent data”</div>
+    </div>
+    <div id="starterTab">
+      <div id="starterDisplay" class="red">
+        ⏳ Venter på næste heat...
+      </div>
+      <!-- Den store digitale klokke -->
+      <div id="currentTime">--:--:--</div>
+    </div>
+    <div id="securityTab">
+      <div id="securityContent">
+        <p>Indtast IP og hent data for at se sikkerhedsstatistikker</p>
+      </div>
+    </div>
+    
+    <div id="debugTab">
+      <div id="debugContent">
+        <p>Indtast IP og hent data for at se debug-information</p>
+        
+        <!-- Test API Endpoint sektion -->
+        <div class="debug-section">
+          <div class="debug-header">
+            🧪 Test API Endpoint
+          </div>
+          <div class="debug-content">
+            <p>Test et specifikt API endpoint for at se hvad det returnerer:</p>
+            <input type="text" id="testEndpoint" placeholder="/api/1.1/results/participant?race_id=1&racenum=101" style="width: 400px; padding: 5px; margin: 5px 0;">
+            <button onclick="testApiEndpoint()" style="padding: 5px 10px; margin-left: 10px;">Test Endpoint</button>
+            <div id="endpointResult" style="margin-top: 15px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="liveVideoTab">
+       
+        <div style="display: flex; gap: 0; justify-content: center; align-items: stretch; flex-wrap: wrap; width: 100vw; max-width: 100vw;">
+            <div style="flex:1; min-width:400px; width:48vw; height:70vh; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-top:32px;">Start (Live MJPEG)</h3>
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:2px solid #007bff;border-radius:8px;background:#222;position:relative;">
+                    <img src="/cam1.mjpeg" alt="Start live video" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.querySelector('.no-video').style.display='flex';" />
+                    <div class="no-video" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;color:#fff;font-size:1.2em;background:rgba(0,0,0,0.5);">Ingen video</div>
+                </div>
+                <div style="color:#555;font-size:0.95em;margin-top:4px;">Live video (MJPEG) – kræver browser support</div>
+            </div>
+            <div style="flex:1; min-width:400px; width:48vw; height:70vh; text-align: center; display: flex; flex-direction: column; align-items: center;">
+                <h3 style="margin-top:32px;">Mål (Live MJPEG)</h3>
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;border:2px solid #28a745;border-radius:8px;background:#222;position:relative;">
+                    <img src="/cam2.mjpeg" alt="Mål live video" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none';this.parentNode.querySelector('.no-video').style.display='flex';" />
+                    <div class="no-video" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;align-items:center;justify-content:center;color:#fff;font-size:1.2em;background:rgba(0,0,0,0.5);">Ingen video</div>
+                </div>
+                <div style="color:#555;font-size:0.95em;margin-top:4px;">Live video (MJPEG) – kræver browser support</div>
+            </div>
+        </div>
+    </div>
+  
+  <script>
+    let ws;
+    let allWaves = [];
+    let allRaces = [];
+    let securityData = new Map(); // Map af wave_id -> { participants, started, finished, dns, inWater }
+    let debugData = { waves: [], races: [], results: new Map() }; // Debug data storage
+    let participantPhones = new Map(); // Map af startnr -> mobilnummer
+    const raceClocks = {};
+
+    // Status bjælke funktioner
+    function showStatusBar() {
+      document.getElementById('statusBar').classList.add('show');
+    }
+    
+    function hideStatusBar() {
+      document.getElementById('statusBar').classList.remove('show');
+    }
+    
+    function updateStatus(elementId, text, type = 'loading') {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.textContent = text;
+        element.className = `status-item ${type}`;
+      }
+    }
+    
+    function updateStatusProgress(elementId, current, total, label) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+        element.innerHTML = `${label}: <span class="status-progress">${current}/${total} (${percentage}%)</span>`;
+        element.className = current >= total ? 'status-item success' : 'status-item loading';
+      }
+    }
+
+    // Returnerer true hvis den givne dato er i dag
+    function isToday(date) {
+      const today = new Date();
+      return date.getFullYear() === today.getFullYear() &&
+             date.getMonth() === today.getMonth() &&
+             date.getDate() === today.getDate();
+    }
+
+    // Formatterer tidsforskel i millisekunder: hvis diff ≥1 dag vises "X dage"
+    function formatCountdown(diff) {
+      if(diff >= 86400000) {
+        const days = Math.floor(diff / 86400000);
+        return `${days} dage`;
+      }
+      return formatTime(diff);
+    }
+
+    // Parse den fulde API-streng: Hvis der findes "– Start:" udtrækkes alt efter markøren.
+    // Forventet format: "... – Start: dd.MM.yyyy, HH.mm"
+    function getParsedStartTime(rawStr) {
+      if (!rawStr) return null;
+      const marker = "– Start:";
+      let idx = rawStr.indexOf(marker);
+      if (idx === -1) {
+        // Hvis marker ikke findes, benyt evt. custom tid (fx "16.00-16.10")
+        return getCustomStartTime(rawStr);
+      }
+      // Udtræk alt efter marker
+      const startPart = rawStr.substring(idx + marker.length).trim();
+      // Forventet format: "dd.MM.yyyy, HH.mm"
+      const parts = startPart.split(",");
+      if (parts.length < 2) return null;
+      const datePart = parts[0].trim(); // f.eks. "22.06.2025"
+      const timePart = parts[1].trim(); // f.eks. "16.03"
+      const dateNums = datePart.split(".");
+      if (dateNums.length < 3) return null;
+      const day = parseInt(dateNums[0], 10);
+      const month = parseInt(dateNums[1], 10) - 1;
+      const year = parseInt(dateNums[2], 10);
+      let hour, minute;
+      if (timePart.indexOf(":") !== -1) {
+        const timeNums = timePart.split(":");
+        hour = parseInt(timeNums[0], 10);
+        minute = parseInt(timeNums[1], 10);
+      } else if (timePart.indexOf(".") !== -1) {
+        const timeNums = timePart.split(".");
+        hour = parseInt(timeNums[0], 10);
+        minute = parseInt(timeNums[1], 10);
+      } else {
+        return null;
+      }
+      return new Date(year, month, day, hour, minute, 0);
+    }
+
+    // Hvis API-strengen ikke indeholder "– Start:" anvendes custom tid ud fra fx "16.00-16.10"
+    function getCustomStartTime(timeStr) {
+      if (!timeStr) return null;
+      if (timeStr.indexOf('-') !== -1) {
+        timeStr = timeStr.split('-')[0].trim();
+      }
+      timeStr = timeStr.replace('.', ':');
+      const parts = timeStr.split(':');
+      if (parts.length < 2) return null;
+      const hours = parseInt(parts[0], 10);
+      const minutes = parseInt(parts[1], 10);
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
+    }
+
+    function showTab(tabId, btn) {
+      document.querySelectorAll('#tabs > div').forEach(div => div.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    function parseDate(str) {
+      return str ? new Date(str) : null;
+    }
+
+    // Formatterer en tidsforskel (ms) til strengen HH:MM:SS
+    function formatTime(ms) {
+      const sec = Math.floor(Math.abs(ms) / 1000);
+      const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+      const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+      const s = String(sec % 60).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function updateCountdowns() {
+      document.querySelectorAll('[data-start]').forEach(el => {
+        const t = new Date(el.getAttribute('data-start')).getTime();
+        const diff = t - Date.now();
+        el.textContent = diff > 0 
+          ? `⏳ Starter om ${formatCountdown(diff)}` 
+          : `✅ Startet for ${formatCountdown(-diff)} siden`;
+      });
+    }
+
+    function updateRaceClocks() {
+      for (const [raceId, el] of Object.entries(raceClocks)) {
+        const t = el.getAttribute('data-start');
+        if (!t) continue;
+        const diff = Date.now() - new Date(t).getTime();
+        el.textContent = diff >= 0 
+          ? `Race clock: ${formatTime(diff)}` 
+          : "Race clock: --:--:--";
+      }
+    }
+
+    function updateStarterBanner() {
+  const container = document.getElementById('starterDisplay');
+  if (!allWaves.length) {
+    container.textContent = "⏳ Venter på næste heat...";
+    container.className = "red";
+    return;
+  }
+  const now = Date.now();
+  
+  // Mapper alle waves til at få et tidsstempel via parseDate().
+  // Filtrerer kun dem, der ligger i dag.
+  const todayWaves = allWaves
+    .map(w => ({ ...w, time: parseDate(w.starttime)?.getTime() }))
+    .filter(w => w.time && isToday(parseDate(w.starttime)))
+    .sort((a, b) => a.time - b.time);
+  
+  if (todayWaves.length === 0) {
+    container.className = "red";
+    container.innerText = "Der er ikke flere heat i dag";
+    return;
+  }
+  
+  // Find et "nuværende" heat, hvis nuværende tid er inden for 60 sekunder efter start.
+  const current = todayWaves.find(w => w.time <= now && now < w.time + 60000);
+  // Find ellers det næste heat, hvis starttiden er i fremtiden.
+  const next = todayWaves.find(w => w.time > now);
+  const wave = current || next;
+  
+  if (wave && wave.time) {
+    const diff = wave.time - now;
+    // Formatér starttidspunktet med dato og tid
+    const startTimeStr = new Date(wave.time).toLocaleString('da-DK', { 
+      day: '2-digit', month: '2-digit', year: 'numeric', 
+      hour: '2-digit', minute: '2-digit'
+    });
+    // Fjern evt. uønskede dele af navnet
+    const cleanedName = wave.name.replace(/Vejl\.?\s*Svømmetid:.*/, '').trim();
+    let label;
+    if (diff > 0) {
+      // Hvis heatet endnu ikke er startet (mindre end 60 sek til start)
+      label = `⏳ Næste heat: ${cleanedName} \n⏳ Starter om ${formatTime(diff)}`;
+    } else {
+      // Hvis heatet er startet for mere end 60 sek
+      label = `✅ Nuværende heat: ${cleanedName} \n✅ Startet for ${formatTime(-diff)} siden`;
+    }
+    container.className = diff > 30000 ? "red" : (diff > 0 ? "yellow" : "green");
+    container.innerText = label;
+  } else {
+    container.className = "red";
+    container.innerText = "⏳ Der er ikke flere heat i dag";
+  }
+}
+    // Opdaterer den store digitale klokke (aktuel tid)
+    function updateCurrentTime() {
+      const now = new Date();
+      const display = document.getElementById('currentTime');
+      display.innerText = now.toLocaleTimeString('da-DK', { hour12: false });
+    }
+
+    // Beregner hvor længe en svømmer har været i vandet
+    function getTimeInWater(starttime) {
+      if (!starttime) return 'Ukendt';
+      
+      let start;
+      // Håndter forskellige formater for starttid
+      if (starttime.includes('T')) {
+        // ISO format: "2025-08-21T18:19:06.077Z"
+        start = new Date(starttime);
+      } else if (starttime.includes(':')) {
+        // Time of day format: "18:19:06.077"
+        const today = new Date();
+        const [hours, minutes, seconds] = starttime.split(':');
+        const [sec, ms] = seconds.split('.');
+        start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                        parseInt(hours), parseInt(minutes), parseInt(sec), parseInt(ms || 0));
+      } else {
+        // Fallback til almindelig Date parsing
+        start = new Date(starttime);
+      }
+      
+      if (isNaN(start.getTime())) return 'Ukendt';
+      
+      const now = new Date();
+      const diff = now - start;
+      return formatTime(diff);
+    }
+
+    // Henter sikkerhedsdata for alle waves
+    async function loadSecurityData(ip) {
+      try {
+        // Filtrer kun waves uden endtime (aktive eller kommende heat)
+        const activeWaves = allWaves.filter(wave => !wave.endtime);
+        
+        updateStatus('statusSecurity', '🛡️ Sikkerhed: Starter indlæsning...', 'loading');
+        
+        // Hent data for alle aktive waves
+        let processedWaves = 0;
+        for (const wave of activeWaves) {
+          if (!wave.race_ids || wave.race_ids.length === 0) {
+            processedWaves++;
+            updateStatusProgress('statusSecurity', processedWaves, activeWaves.length, '🛡️ Sikkerhed');
+            continue;
+          }
+          
+          const raceId = wave.race_ids[0]; // Brug første race_id
+          
+          updateStatus('statusSecurity', `🛡️ Sikkerhed: Behandler ${wave.name}...`, 'loading');
+          
+          // Hent alle resultater for denne wave med pagination
+          let allResults = [];
+          let page = 1;
+          const pageSize = 5000; // Øg page_size betydeligt
+          let totalPages = 0;
+          
+          while (true) {
+            const response = await fetch(`http://${ip}/api/1.1/results/list?race_id=${raceId}&page=${page}&page_size=${pageSize}`);
+            const data = await response.json();
+            
+            if (!data.list || data.list.length === 0) break;
+            
+            allResults = allResults.concat(data.list);
+            totalPages++;
+            
+            // Hvis vi får færre resultater end page_size, er vi færdige
+            if (data.list.length < pageSize) break;
+            
+            page++;
+          }
+          
+          console.log(`Hentet ${allResults.length} totale resultater for race ${raceId} (${totalPages} sider)`);
+          
+          // Gem debug data med alle resultater
+          debugData.results.set(wave.id, {
+            wave: wave,
+            raceId: raceId,
+            apiResponse: { list: allResults, page_size: pageSize, total_pages: totalPages },
+            totalResults: allResults.length
+          });
+          
+          if (allResults.length > 0) {
+            console.log(`🔍 Filtrerer resultater for wave "${wave.name}" (ID: ${wave.id}, type: ${typeof wave.id})`);
+            
+            // Forbedret filtrering af resultater for denne specifikke wave
+            let waveResults = allResults.filter(result => {
+              // Log første 3 resultater for debugging
+              if (allResults.indexOf(result) < 3) {
+                console.log(`🔬 Sample result ${allResults.indexOf(result)}:`, {
+                  wave_id: result.wave_id,
+                  wave_id_type: typeof result.wave_id,
+                  wave_ids: result.wave_ids,
+                  wave_name: result.wave_name,
+                  racenum: result.racenum,
+                  name: result.name_full || result.name
+                });
+              }
+              
+              // Streng sammenligning af wave ID (mest pålidelig)
+              if (result.wave_id !== undefined && result.wave_id !== null) {
+                const matches = String(result.wave_id) === String(wave.id);
+                if (allResults.indexOf(result) < 3) {
+                  console.log(`🎯 Wave ID match for result ${allResults.indexOf(result)}: "${result.wave_id}" === "${wave.id}" = ${matches}`);
+                }
+                return matches;
+              }
+              
+              // Tjek wave_ids array hvis det findes
+              if (result.wave_ids && Array.isArray(result.wave_ids)) {
+                const matches = result.wave_ids.some(id => String(id) === String(wave.id));
+                if (allResults.indexOf(result) < 3) {
+                  console.log(`🎯 Wave IDs array match for result ${allResults.indexOf(result)}: ${result.wave_ids} contains "${wave.id}" = ${matches}`);
+                }
+                return matches;
+              }
+              
+              return false;
+            });
+            
+            console.log(`✅ Wave filtering complete: ${waveResults.length} resultater fundet for wave "${wave.name}"`);
+            
+            // Hvis ingen resultater fundet med wave ID, prøv navn-matching som backup
+            if (waveResults.length === 0) {
+              console.log(`⚠️ Ingen resultater fundet med wave ID, prøver navn-matching...`);
+              waveResults = allResults.filter(result => {
+                if (result.wave_name && wave.name) {
+                  const nameMatch = result.wave_name.toLowerCase().includes(wave.name.toLowerCase()) || 
+                                  wave.name.toLowerCase().includes(result.wave_name.toLowerCase());
+                  return nameMatch;
+                }
+                return false;
+              });
+              console.log(`📝 Navn-matching resultat: ${waveResults.length} resultater fundet`);
+            }
+            
+            // Hvis stadig ingen resultater, log detaljeret debug info
+            if (waveResults.length === 0) {
+              console.warn(`❌ Ingen deltagere fundet for wave "${wave.name}" (ID: ${wave.id})`);
+              console.log(`🔍 Debug: Alle unikke wave_id værdier i API:`, [...new Set(allResults.map(r => r.wave_id))].sort());
+              console.log(`🔍 Debug: Alle unikke wave_name værdier i API:`, [...new Set(allResults.map(r => r.wave_name))].filter(Boolean));
+              waveResults = []; // Tom array
+            }
+            
+            // Opdater debug data med filtrerede resultater
+            debugData.results.get(wave.id).filteredResults = waveResults;
+            debugData.results.get(wave.id).filteredCount = waveResults.length;
+            
+            // Tilføj status statistikker til debug
+            const statusStats = {};
+            waveResults.forEach(r => {
+              const status = r.status_text || 'Unknown';
+              statusStats[status] = (statusStats[status] || 0) + 1;
+            });
+            debugData.results.get(wave.id).statusStats = statusStats;
+            
+            // Tilføj detaljeret debug info
+            debugData.results.get(wave.id).waveIdComparison = {
+              waveId: wave.id,
+              waveIdType: typeof wave.id,
+              waveName: wave.name,
+              raceId: raceId,
+              totalApiResults: allResults.length,
+              filteredResults: waveResults.length,
+              filteringMethod: waveResults.length === 0 ? 'no_match' : 'wave_id_match',
+              allUniqueWaveIds: [...new Set(allResults.map(r => r.wave_id))].sort((a,b) => a-b),
+              allUniqueWaveNames: [...new Set(allResults.map(r => r.wave_name))].filter(Boolean).sort(),
+              expectedWaveId: wave.id,
+              sampleResultsWithWaveInfo: allResults.slice(0, 15).map((r, index) => ({
+                index: index,
+                racenum: r.racenum,
+                name: r.name_full || r.name,
+                wave_id: r.wave_id,
+                wave_name: r.wave_name,
+                exact_wave_id_match: String(r.wave_id) === String(wave.id),
+                status: r.status_text
+              })),
+              matchingResults: waveResults.slice(0, 5).map(r => ({
+                racenum: r.racenum,
+                name: r.name_full || r.name,
+                wave_id: r.wave_id,
+                wave_name: r.wave_name,
+                status: r.status_text
+              }))
+            };
+            
+            console.log(`Wave ${wave.name} (ID: ${wave.id}, type: ${typeof wave.id}): Fandt ${waveResults.length} resultater af ${allResults.length} total`);
+            
+            const participants = waveResults.length;
+            const started = waveResults.filter(r => r.status_text === 'Started and active' || r.status_text === 'Finished' || r.status_text === 'Withdrawn during race (DNF)').length;
+            const finished = waveResults.filter(r => r.status_text === 'Finished' || r.finishtime).length;
+            const dnf = waveResults.filter(r => r.status_text === 'Withdrawn during race (DNF)' || r.state === 'DNF').length;
+            
+            // Svømmere i vandet (uden telefonnumre)
+            const inWater = waveResults.filter(r => r.status_text === 'Started and active');
+            const inWaterWithInfo = inWater.map(swimmer => ({
+              name: swimmer.name_full || swimmer.name || 'Ukendt',
+              racenum: swimmer.racenum || 'N/A',
+              starttime: swimmer.starttime || swimmer.start_tod,
+              participantId: swimmer.participant_id || swimmer.id
+            }));
+            
+            securityData.set(wave.id, {
+              participants,
+              started,
+              finished,
+              dnf,
+              inWater: inWaterWithInfo
+            });
+          }
+          
+          processedWaves++;
+          updateStatusProgress('statusSecurity', processedWaves, activeWaves.length, '🛡️ Sikkerhed');
+        }
+        
+        updateStatus('statusSecurity', `🛡️ Sikkerhed: ${activeWaves.length} waves behandlet`, 'success');
+        updateSecurityDisplay();
+        updateDebugDisplay();
+      } catch (error) {
+        console.error('Fejl ved indlæsning af sikkerhedsdata:', error);
+        updateStatus('statusSecurity', '🛡️ Sikkerhed: Fejl ved indlæsning', 'error');
+      }
+    }
+
+    // Opdaterer sikkerhedsdisplayet
+    function updateSecurityDisplay() {
+      const container = document.getElementById('securityContent');
+      
+      // Filtrer kun waves uden endtime (aktive eller kommende heat)
+      const activeWaves = allWaves.filter(wave => !wave.endtime);
+      
+      if (activeWaves.length === 0) {
+        container.innerHTML = '<p>Ingen aktive heat fundet (alle heat er afsluttet)</p>';
+        return;
+      }
+      
+      // Beregn samlede statistikker på tværs af alle heat
+      let totalParticipants = 0;
+      let totalStarted = 0;
+      let totalFinished = 0;
+      let totalDnf = 0;
+      let totalInWater = 0;
+      
+      for (const wave of activeWaves) {
+        const security = securityData.get(wave.id);
+        if (security) {
+          totalParticipants += security.participants;
+          totalStarted += security.started;
+          totalFinished += security.finished;
+          totalDnf += security.dnf;
+          totalInWater += security.inWater.length;
+        }
+      }
+      
+      let html = `
+        <div class="security-overview">
+          <h2>🛡️ Samlet Sikkerhedsoversigt</h2>
+          <div class="security-overview-stats">
+          <div class="security-overview-stat ${totalInWater > 0 ? 'danger' : ''}">
+              <span class="security-overview-stat-number">${totalInWater}</span>
+              <span class="security-overview-stat-label">I Vandet</span>
+            </div>  
+            <div class="security-overview-stat">
+              <span class="security-overview-stat-number">${totalFinished}</span>
+              <span class="security-overview-stat-label">Gennemført</span>
+            </div>
+            <div class="security-overview-stat">
+              <span class="security-overview-stat-number">${totalDnf}</span>
+              <span class="security-overview-stat-label">DNF</span>
+            </div>
+            
+          </div>
+        </div>
+      `;
+      
+      // Sorter waves efter starttid
+      const sortedWaves = activeWaves.sort((a, b) => {
+        const timeA = parseDate(a.starttime)?.getTime() || 0;
+        const timeB = parseDate(b.starttime)?.getTime() || 0;
+        return timeA - timeB;
+      });
+
+      
+        for (const wave of sortedWaves) {
+            const security = securityData.get(wave.id) || {
+                participants: 0,
+                started: 0,
+                finished: 0,
+                dnf: 0,
+                inWater: []
+            };
+            const startTime = parseDate(wave.starttime);
+            const timeStr = startTime ? startTime.toLocaleString('da-DK', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) : 'Ingen tid';
+
+            let heatTimeHtml = '';
+            let heatClass = '';
+            if (!startTime || startTime.getTime() > Date.now()) {
+                heatClass = '';
+            } else {
+                const heatMs = Date.now() - startTime.getTime();
+                heatTimeHtml = `<div style="color:#228B22;font-weight:bold;margin-bottom:6px;">⏱️ Heat i gang: ${formatTime(heatMs)}</div>`;
+                if (security.inWater.length > 0 && heatMs < 90 * 60 * 1000) {
+                    heatClass = 'green-heat';
+                } else if (security.inWater.length > 0 && heatMs >= 90 * 60 * 1000 && heatMs < 120 * 60 * 1000) {
+                    heatClass = 'yellow-heat';
+                } else if (security.inWater.length > 0 && heatMs >= 120 * 60 * 1000) {
+                    heatClass = 'red-heat';
+                } else if (security.inWater.length === 0) {
+                    heatClass = 'green-heat';
+                }
+            }
+
+            html += `
+  <div class="security-heat ${heatClass}">
+    <div class="security-heat-header">
+      🌊 ${wave.name} - ${timeStr}
+      ${heatTimeHtml}
+    </div>
+
+            <div class="security-stats">
+              <div class="security-stat">
+                <span class="security-stat-number">${security.participants}</span>
+                <span>Deltagere</span>
+              </div>
+              <div class="security-stat">
+                <span class="security-stat-number">${security.started}</span>
+                <span>Startet</span>
+              </div>
+              <div class="security-stat">
+                <span class="security-stat-number">${security.finished}</span>
+                <span>Gennemført</span>
+              </div>
+              <div class="security-stat">
+                <span class="security-stat-number">${security.dnf}</span>
+                <span>DNF</span>
+              </div>
+              <div class="security-stat ${security.inWater.length > 0 ? 'danger' : ''}">
+                <span class="security-stat-number">${security.inWater.length}</span>
+                <span>I vandet</span>
+              </div>
+            </div>
+            ${(security.inWater.length > 0 && security.inWater.length < 6) ? `
+              <div class="swimmers-in-water">
+                <strong>⚠️ Svømmere stadig i vandet:</strong>
+                <div class="swimmer-list">
+                  ${security.inWater.map(swimmer => {
+                    // Hent mobilnummer fra CSV data
+                      const phoneData = participantPhones.get(String(swimmer.racenum));
+                      let phoneDisplay = '';
+                      if (phoneData) {
+                          phoneDisplay = `<div class="swimmer-phone">📱 Deltager: ${phoneData.deltagerTlf || '–'}<br>📱 Profil: ${phoneData.profilTlf || '–'}</div>`;
+                      } else {
+                          phoneDisplay = '<div class="swimmer-phone" style="color: #999;">📱 Ingen mobilnr fundet</div>';
+                      }
+                      const alder = phoneData ? beregnAlder(phoneData.fødselsdag) : '';
+                      const alderDisplay = alder ? `<div class="swimmer-phone">🎂 Alder: ${alder}</div>` : '';
+                    
+                      return `
+  <div class="swimmer-item">
+    <strong>#${swimmer.racenum}</strong> - ${swimmer.name}<br>
+    ${phoneDisplay}
+    ${alderDisplay}
+    <small>Start: ${swimmer.starttime ? (swimmer.starttime.includes(':') ? swimmer.starttime : new Date(swimmer.starttime).toLocaleTimeString('da-DK')) : 'Ukendt'}</small><br>
+    <div class="swimmer-time">⏱️ I vandet: ${getTimeInWater(swimmer.starttime)}</div>
+  </div>
+`;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
+
+    // Opdaterer debug-displayet
+    function updateDebugDisplay() {
+      const container = document.getElementById('debugContent');
+      
+      let html = `
+        <div class="debug-section">
+          <div class="debug-header" onclick="toggleDebugSection('waves-section')">
+            📊 Waves Data (${allWaves.length} waves)
+          </div>
+          <div id="waves-section" class="debug-content">
+            <div class="debug-json">${JSON.stringify(allWaves, null, 2)}</div>
+          </div>
+        </div>
+        
+        <div class="debug-section">
+          <div class="debug-header" onclick="toggleDebugSection('races-section')">
+            🏁 Races Data (${allRaces.length} races)
+          </div>
+          <div id="races-section" class="debug-content" style="display: none;">
+            <div class="debug-json">${JSON.stringify(allRaces, null, 2)}</div>
+          </div>
+        </div>
+      `;
+      
+      // Tilføj debug info for hver wave
+      for (const [waveId, debugInfo] of debugData.results) {
+        const wave = debugInfo.wave;
+        html += `
+          <div class="debug-section">
+            <div class="debug-header" onclick="toggleDebugSection('wave-${waveId}-section')">
+              🌊 ${wave.name} - Results (${debugInfo.filteredCount || 0}/${debugInfo.totalResults || 0})
+            </div>
+            <div id="wave-${waveId}-section" class="debug-content" style="display: none;">
+              <h4>Wave Info:</h4>
+              <div class="debug-json">${JSON.stringify(wave, null, 2)}</div>
+              
+              <h4>Status Statistikker:</h4>
+              <div class="debug-json">${JSON.stringify(debugInfo.statusStats || {}, null, 2)}</div>
+              
+              <h4>Wave ID Sammenligning:</h4>
+              <div class="debug-json">${JSON.stringify(debugInfo.waveIdComparison || {}, null, 2)}</div>
+              
+              <h4>API Response (første 5 resultater):</h4>
+              <div class="debug-json">${JSON.stringify({
+                ...debugInfo.apiResponse,
+                list: debugInfo.apiResponse.list ? debugInfo.apiResponse.list.slice(0, 5) : []
+              }, null, 2)}</div>
+              
+              <h4>Filtrerede Resultater (første 10):</h4>
+              <div class="debug-json">${JSON.stringify((debugInfo.filteredResults || []).slice(0, 10), null, 2)}</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      container.innerHTML = html;
+    }
+
+    // Test en specifik API endpoint og vis resultatet
+    async function testApiEndpoint() {
+      const ip = document.getElementById('ip').value.trim();
+      const endpoint = document.getElementById('testEndpoint').value.trim();
+      const resultDiv = document.getElementById('endpointResult');
+      
+      if (!ip) {
+        resultDiv.innerHTML = '<div style="color: red; padding: 10px; background: #ffe6e6; border-radius: 4px;">❌ Indtast IP først</div>';
+        return;
+      }
+      
+      if (!endpoint) {
+        resultDiv.innerHTML = '<div style="color: red; padding: 10px; background: #ffe6e6; border-radius: 4px;">❌ Indtast endpoint</div>';
+        return;
+      }
+      
+      try {
+        resultDiv.innerHTML = '<div style="color: blue; padding: 10px; background: #e6f3ff; border-radius: 4px;">🔄 Tester endpoint...</div>';
+        
+        const fullUrl = `http://${ip}${endpoint}`;
+        console.log(`🧪 Tester URL: ${fullUrl}`);
+        
+        const response = await fetch(fullUrl);
+        
+        let resultHtml = `
+          <div style="margin-bottom: 15px;">
+            <strong>🌐 URL:</strong> ${fullUrl}<br>
+            <strong>📊 Status:</strong> ${response.status} ${response.statusText}<br>
+            <strong>📝 Headers:</strong>
+          </div>
+        `;
+        
+        // Vis response headers
+        resultHtml += '<div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-family: monospace; font-size: 0.9em;">';
+        for (const [key, value] of response.headers.entries()) {
+          resultHtml += `${key}: ${value}<br>`;
+        }
+        resultHtml += '</div>';
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          resultHtml += `
+            <div style="color: green; padding: 10px; background: #e6ffe6; border-radius: 4px; margin-bottom: 15px;">
+              ✅ Success! Response modtaget
+            </div>
+            <div>
+              <strong>📋 Response Data:</strong>
+              <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 0.85em; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto;">
+                ${JSON.stringify(data, null, 2)}
+              </div>
+            </div>
+          `;
+          
+          // Hvis det er participant data, vis specifikke felter
+          if (endpoint.includes('participant')) {
+            resultHtml += '<div style="margin-top: 15px;"><strong>🔍 Tilgængelige felter:</strong><br>';
+            resultHtml += '<div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-top: 5px;">';
+            
+            let participantData = data;
+            if (data.list && Array.isArray(data.list) && data.list.length > 0) {
+              participantData = data.list[0];
+            } else if (data.participant) {
+              participantData = data.participant;
+            }
+            
+            const fields = Object.keys(participantData);
+            resultHtml += fields.map(field => `<span style="display: inline-block; background: white; padding: 3px 6px; margin: 2px; border-radius: 3px; font-family: monospace;">${field}</span>`).join('');
+            resultHtml += '</div>';
+            
+            // Søg efter telefon-relaterede felter
+            const phoneFields = fields.filter(field => 
+              field.toLowerCase().includes('phone') || 
+              field.toLowerCase().includes('mobile') || 
+              field.toLowerCase().includes('tel') ||
+              field.toLowerCase().includes('contact')
+            );
+            
+            if (phoneFields.length > 0) {
+              resultHtml += '<div style="margin-top: 10px;"><strong>📱 Mulige telefon-felter:</strong><br>';
+              resultHtml += '<div style="background: #d4edda; padding: 10px; border-radius: 4px; margin-top: 5px;">';
+              phoneFields.forEach(field => {
+                const value = participantData[field];
+                resultHtml += `<div style="font-family: monospace;"><strong>${field}:</strong> ${value || 'null'}</div>`;
+              });
+              resultHtml += '</div></div>';
+            } else {
+              resultHtml += '<div style="margin-top: 10px; color: orange; background: #fff3cd; padding: 10px; border-radius: 4px;">⚠️ Ingen telefon-relaterede felter fundet</div>';
+            }
+          }
+          
+          console.log(`✅ API Test Success:`, data);
+          
+        } else {
+          const errorText = await response.text();
+          resultHtml += `
+            <div style="color: red; padding: 10px; background: #ffe6e6; border-radius: 4px;">
+              ❌ Error: ${response.status} ${response.statusText}
+            </div>
+            <div style="margin-top: 10px;">
+              <strong>📄 Error Response:</strong>
+              <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 5px; font-family: monospace; font-size: 0.9em;">
+                ${errorText}
+              </div>
+            </div>
+          `;
+          
+          console.error(`❌ API Test Error:`, response.status, errorText);
+        }
+        
+        resultDiv.innerHTML = resultHtml;
+        
+      } catch (error) {
+        const errorHtml = `
+          <div style="color: red; padding: 10px; background: #ffe6e6; border-radius: 4px;">
+            💥 Network Error: ${error.message}
+          </div>
+        `;
+        resultDiv.innerHTML = errorHtml;
+        console.error(`💥 API Test Network Error:`, error);
+      }
+    }
+
+    // Toggle debug section visibility
+    function toggleDebugSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+      function startTimers() {
+          setInterval(() => {
+              updateCountdowns();
+              updateRaceClocks();
+              updateStarterBanner();
+              updateCurrentTime();
+              // Fjern opdatering af sikkerhedsdisplay her!
+          }, 1000);
+
+          // Opdater sikkerhedsdisplay og deltagerinfo kun hvert minut
+          setInterval(() => {
+              if (securityData.size > 0) updateSecurityDisplay();
+              // Hvis du har en deltagerinfo-opdatering, kald den her
+          }, 60000);
+      }
+
+      function connectWebSocket(ip) {
+          if (ws) ws.close();
+          ws = new WebSocket(`ws://${ip}/api/1.1/push?events=results,eventdata`);
+          updateStatus('statusWebSocket', '📡 WebSocket: Forbinder...', 'loading');
+          ws.onopen = () => {
+              updateStatus('statusWebSocket', '� WebSocket: Tilsluttet', 'success');
+          };
+          ws.onclose = () => {
+              updateStatus('statusWebSocket', '� WebSocket: Afbrudt', 'error');
+          };
+          ws.onerror = () => {
+              updateStatus('statusWebSocket', '📡 WebSocket: Fejl', 'error');
+          };
+          ws.onmessage = evt => {
+              const data = JSON.parse(evt.data);
+              console.log('📡 WebSocket besked modtaget:', data);
+
+              if (data.event === "eventdata") {
+                  console.log('🔄 EventData event - genindlæser alt data');
+                  loadData();
+              }
+              // Fjern opdatering på results event!
+              // else if (data.event === "results") {
+              //   const ip = document.getElementById('ip').value.trim();
+              //   if (ip) loadSecurityData(ip);
+              // }
+          };
+      }
+
+    async function loadData() {
+  const ip = document.getElementById('ip').value.trim();
+  if (!ip) return alert("Indtast IP først");
+  
+  // Vis status bjælke og reset status
+  showStatusBar();
+  updateStatus('statusRaces', '📊 Races: Indlæser...', 'loading');
+  updateStatus('statusWaves', '🌊 Waves: Indlæser...', 'loading');
+  updateStatus('statusSecurity', '🛡️ Sikkerhed: Venter på data...', 'loading');
+  
+  document.getElementById('raceList').textContent = "⏳ Indlæser...";
+  connectWebSocket(ip);
+  
+  try {
+    const [racesRes, wavesRes] = await Promise.all([
+      fetch(`http://${ip}/api/1.1/event/races`).then(r => r.json()),
+      fetch(`http://${ip}/api/1.1/event/waves`).then(r => r.json())
+    ]);
+    
+    const races = racesRes.list || [];
+    const waves = wavesRes.list || [];
+    allWaves = waves;
+    allRaces = races;
+    
+    // Opdater status for races og waves
+    updateStatus('statusRaces', `📊 Races: ${races.length} indlæst`, 'success');
+    updateStatus('statusWaves', `🌊 Waves: ${waves.length} indlæst`, 'success');
+    
+    // Gem debug data
+    debugData.waves = waves;
+    debugData.races = races;
+    debugData.results.clear();
+    
+    races.sort((a, b) => a.name.localeCompare(b.name));
+    const html = [];
+    for (const race of races) {
+      html.push(`<div class="race">
+            <strong>${race.name}</strong> (ID: ${race.id})
+            <div class="raceclock" id="raceclock-${race.id}" data-start=""></div>
+            <ul>`);
+      const relevantWaves = waves
+        .filter(w => w.race_ids?.includes(race.id))
+        .sort((a, b) => new Date(a.starttime) - new Date(b.starttime));
+      for (const wave of relevantWaves) {
+        const tid = wave.starttime
+          ? new Date(wave.starttime).toLocaleString('da-DK', { 
+              day: '2-digit', month: '2-digit', year: 'numeric', 
+              hour: '2-digit', minute: '2-digit'
+            })
+          : "(ingen tid)";
+        html.push(`<li class="wave">
+              🌊 ${wave.name} – Start: ${tid}
+              <div class="countdown" data-start="${wave.starttime || ''}">...</div>
+            </li>`);
+      }
+      html.push(`</ul></div>`);
+    }
+    document.getElementById('raceList').innerHTML = html.join('');
+    
+    await loadRaceClocks(ip, races);
+    await loadSecurityData(ip);
+    updateStarterBanner();
+    startTimers();
+    
+  } catch (error) {
+    console.error('Fejl ved indlæsning af data:', error);
+    updateStatus('statusRaces', '📊 Races: Fejl', 'error');
+    updateStatus('statusWaves', '🌊 Waves: Fejl', 'error');
+    updateStatus('statusSecurity', '🛡️ Sikkerhed: Fejl', 'error');
+  }
+}
+
+    async function loadRaceClocks(ip, races) {
+      for (const race of races) {
+        try {
+          const res = await fetch(`http://${ip}/api/1.1/timing/raceclock?race_id=${race.id}`);
+          const json = await res.json();
+          const el = document.getElementById(`raceclock-${race.id}`);
+          if (json.gun_start_time) {
+            el.setAttribute('data-start', json.gun_start_time);
+            raceClocks[race.id] = el;
+          }
+        } catch {
+          console.warn(`Kunne ikke hente race clock for race ID ${race.id}`);
+        }
+      }
+    }
+
+    // Læser CSV fil med deltager mobilnumre
+      async function loadParticipantPhonesFromServer() {
+          const statusDiv = document.getElementById('csvStatus');
+          try {
+              statusDiv.innerHTML = '🔄 Indlæser mobilnumre fra server...';
+              statusDiv.style.background = '#cce5ff';
+              statusDiv.style.color = '#004085';
+              const response = await fetch('/mobilnumre');
+              if (!response.ok) throw new Error('CSV fil ikke fundet');
+              const csvText = await response.text();
+              const lines = csvText.split('\n');
+              participantPhones.clear();
+              let phoneCount = 0;
+              let headerFound = false;
+              for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i].trim();
+                  if (!line) continue;
+                  let columns = line.split('\t');
+                  if (columns.length === 1) columns = line.split(',');
+                  if (columns.length === 1) columns = line.split(';');
+                  if (!headerFound && (i === 0 || line.toLowerCase().includes('startnr'))) {
+                      headerFound = true;
+                      continue;
+                  }
+                  if (columns.length < 4) continue;
+                  const startnr = columns[0].trim();
+                  const fornavn = columns[1].trim();
+                  const efternavn = columns[2].trim();
+                  const fødselsdag = columns.length > 3 ? columns[3].trim() : '';
+                  const deltagerTlf = columns.length > 4 ? columns[4].trim() : '';
+                  const profilTlf = columns.length > 5 ? columns[5].trim() : '';
+                  participantPhones.set(startnr, {
+                      deltagerTlf: deltagerTlf,
+                      profilTlf: profilTlf,
+                      name: `${fornavn} ${efternavn}`.trim(),
+                      fødselsdag: fødselsdag
+                  });
+                  phoneCount++;
+              }
+              statusDiv.innerHTML = `✅ Indlæst ${phoneCount} mobilnumre fra deltagerinfo.csv`;
+              statusDiv.style.background = '#d4edda';
+              statusDiv.style.color = '#155724';
+              if (phoneCount > 0) {
+                  updateStatus('statusCSV', `📱 CSV: ${phoneCount} mobilnumre indlæst`, 'success');
+              } else {
+                  updateStatus('statusCSV', '📱 CSV: Ingen mobilnumre fundet', 'error');
+              }
+          } catch (error) {
+              statusDiv.innerHTML = `❌ Fejl: ${error.message}`;
+              statusDiv.style.background = '#f8d7da';
+              statusDiv.style.color = '#721c24';
+              updateStatus('statusCSV', '📱 CSV: Fejl ved indlæsning', 'error');
+          }
+      }
+    window.showTab = showTab;
+    window.loadData = loadData;
+      window.addEventListener('DOMContentLoaded', loadParticipantPhonesFromServer);
+
+      function beregnAlder(fødselsdagStr) {
+          if (!fødselsdagStr) return '';
+          let parts = fødselsdagStr.split('-');
+          if (parts.length !== 3) parts = fødselsdagStr.split('.');
+          if (parts.length !== 3) return '';
+          const day = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const year = parseInt(parts[2], 10);
+          if (isNaN(day) || isNaN(month) || isNaN(year)) return '';
+          const fødselsdato = new Date(year, month, day);
+          const now = new Date();
+          let alder = now.getFullYear() - fødselsdato.getFullYear();
+          if (now.getMonth() < fødselsdato.getMonth() || (now.getMonth() === fødselsdato.getMonth() && now.getDate() < fødselsdato.getDate())) {
+              alder--;
+          }
+          return alder;
+      }
+
+      function logImageStatus(id, url, statusId) {
+          const img = document.getElementById(id);
+          const status = document.getElementById(statusId);
+          if (!img) return;
+          img.onload = function () {
+              console.log(id + ' loaded:', url);
+              if (status) status.textContent = '';
+          };
+          img.onerror = function (e) {
+              console.error(id + ' failed:', url, e);
+              if (status) status.textContent = 'Ingen forbindelse til kameraet';
+              img.style.background = '#f8d7da';
+              img.style.borderColor = '#b30000';
+          };
+      }
+      window.addEventListener('DOMContentLoaded', function () {
+          logImageStatus('cam1img', '/cam1.jpg', 'cam1status');
+          logImageStatus('cam2img', '/cam2.jpg', 'cam2status');
+      });
+  </script>
+</body>
+</html>
